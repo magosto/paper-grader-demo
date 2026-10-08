@@ -1,0 +1,105 @@
+<main class="page">
+  <header class="page__header">
+    <h1>AI Security Paper Grader</h1>
+    <p class="subtitle">
+      Upload a paper (PDF or DOCX) about AI security &amp; prompt injection. An AI grader scores it
+      on grammar, length, and formatting.
+    </p>
+    <p class="notice">
+      Demo build &mdash; Phase 1: the grader reads whatever text is in the file, including hidden
+      text. It does not yet detect or resist prompt injection.
+    </p>
+  </header>
+
+  <section
+    class="dropzone"
+    [class.dropzone--active]="isDragOver()"
+    [class.dropzone--filled]="selectedFile()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    @if (!selectedFile()) {
+      <p>Drag &amp; drop a .pdf or .docx file here, or</p>
+      <label class="file-picker">
+        Choose file
+        <input type="file" accept=".pdf,.docx" (change)="onFileInputChange($event)" hidden />
+      </label>
+    } @else {
+      <p class="filename">{{ selectedFile()!.name }}</p>
+      <div class="dropzone__actions">
+        <button type="button" class="btn btn--primary" (click)="submit()" [disabled]="isGrading()">
+          {{ isGrading() ? 'Grading…' : 'Grade paper' }}
+        </button>
+        <button type="button" class="btn btn--ghost" (click)="clearFile()" [disabled]="isGrading()">
+          Remove
+        </button>
+      </div>
+    }
+  </section>
+
+  @if (error()) {
+    <div class="banner banner--error">{{ error() }}</div>
+  }
+
+  @if (result(); as res) {
+    <section class="results">
+      <div class="overall" [class]="scoreClass(res.grade.overallScore)">
+        <span class="overall__score">{{ res.grade.overallScore }}</span>
+        <span class="overall__label">/ 100 overall</span>
+      </div>
+
+      <p class="summary">{{ res.grade.summary }}</p>
+
+      <div class="score-grid">
+        <div class="score-card">
+          <span class="score-card__label">Grammar</span>
+          <span class="score-card__value" [class]="scoreClass(res.grade.grammarScore)">{{ res.grade.grammarScore }}</span>
+        </div>
+        <div class="score-card">
+          <span class="score-card__label">Length</span>
+          <span class="score-card__value" [class]="scoreClass(res.grade.lengthScore)">{{ res.grade.lengthScore }}</span>
+        </div>
+        <div class="score-card">
+          <span class="score-card__label">Formatting</span>
+          <span class="score-card__value" [class]="scoreClass(res.grade.formattingScore)">{{ res.grade.formattingScore }}</span>
+        </div>
+        <div class="score-card">
+          <span class="score-card__label">Content</span>
+          <span class="score-card__value" [class]="scoreClass(res.grade.contentScore)">{{ res.grade.contentScore }}</span>
+        </div>
+      </div>
+
+      <p class="word-count">{{ res.grade.wordCount }} words extracted</p>
+
+      <div class="feedback-columns">
+        <div>
+          <h3>Strengths</h3>
+          <ul>
+            @for (item of res.grade.strengths; track item) {
+              <li>{{ item }}</li>
+            }
+          </ul>
+        </div>
+        <div>
+          <h3>Weaknesses</h3>
+          <ul>
+            @for (item of res.grade.weaknesses; track item) {
+              <li>{{ item }}</li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn--ghost" (click)="toggleExtractedText()">
+        {{ showExtractedText() ? 'Hide' : 'Show' }} extracted text sent to the grader
+      </button>
+
+      @if (showExtractedText()) {
+        <pre class="extracted-text">{{ res.extractedText }}</pre>
+      }
+    </section>
+  }
+
+  <router-outlet />
+</main>
